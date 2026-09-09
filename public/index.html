@@ -16,6 +16,14 @@
     --ink: #2A2A2A;
     --muted: #6B6B6B;
     --taken: #E4E0D6;
+    
+    /* Novas cores para os gêneros */
+    --pink-border: #D86ED8;
+    --pink-bg: #FFF0FF;
+    --pink-taken: #EACEEA;
+    --blue-border: #6E9DD8;
+    --blue-bg: #F0F6FF;
+    --blue-taken: #CEDEEA;
   }
 
   *{box-sizing:border-box;}
@@ -94,10 +102,28 @@
   .dot.disp{ background:var(--paper); border:1.5px solid var(--navy); }
   .dot.tomada{ background:var(--taken); border:1.5px solid #B9B3A2; }
 
+  /* Estilos para os blocos de gênero */
+  .block-title {
+    font-family: Georgia, serif;
+    font-size: 22px;
+    margin: 30px 0 10px;
+    text-align: center;
+  }
+  .block-title.female { color: #A040A0; }
+  .block-title.male { color: #4070A0; }
+  
+  .block-desc {
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
   .grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(58px,1fr));
     gap:10px;
+    margin-bottom: 30px;
   }
 
   .seed{
@@ -118,15 +144,35 @@
   .seed:hover{ transform:translateY(-2px); box-shadow:0 4px 10px rgba(31,56,100,0.18); }
   .seed:active{ transform:translateY(0); }
 
-  .seed.tomada{
-    background:var(--taken);
-    border-color:#B9B3A2;
-    color:#8B8574;
-    cursor:default;
-    font-weight:600;
+  /* Estilos Específicos Feminino (1 a 51) */
+  .seed.female {
+    border-color: var(--pink-border);
+    color: #A040A0;
+    background: var(--pink-bg);
   }
-  .seed.tomada:hover{ transform:none; box-shadow:none; }
+  .seed.female.tomada {
+    background: var(--pink-taken);
+    border-color: #C0A0C0;
+    color: #907090;
+    cursor: default;
+    font-weight: 600;
+  }
+  
+  /* Estilos Específicos Masculino (52 a 100) */
+  .seed.male {
+    border-color: var(--blue-border);
+    color: #4070A0;
+    background: var(--blue-bg);
+  }
+  .seed.male.tomada {
+    background: var(--blue-taken);
+    border-color: #A0B0C0;
+    color: #708090;
+    cursor: default;
+    font-weight: 600;
+  }
 
+  .seed.tomada:hover{ transform:none; box-shadow:none; }
   .seed.loading{ opacity:.4; pointer-events:none; }
 
   /* Modal */
@@ -166,6 +212,16 @@
     font-size:13.5px;
     margin:6px 0 18px;
   }
+  .modal p.gender-notice {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 15px;
+    text-align: center;
+    padding: 8px;
+    border-radius: 6px;
+  }
+  .modal p.gender-notice.female { background-color: var(--pink-bg); color: #A040A0; }
+  .modal p.gender-notice.male { background-color: var(--blue-bg); color: #4070A0; }
 
   label{
     display:block;
@@ -278,7 +334,7 @@
 
 <script>
 const TOTAL = 100;
-let claimed = {}; // { "5": {nome, matricula, telefone} }
+let claimed = {}; 
 let pendingSeed = null;
 
 async function loadClaimed(){
@@ -298,21 +354,61 @@ function renderGrid(){
   const gridArea = document.getElementById('gridArea');
   gridArea.className = '';
   gridArea.innerHTML = '';
-  const grid = document.createElement('div');
-  grid.className = 'grid';
-  for(let i=1;i<=TOTAL;i++){
+  
+  // Bloco Feminino
+  const titleFemale = document.createElement('h2');
+  titleFemale.className = 'block-title female';
+  titleFemale.textContent = 'Sementes Femininas';
+  gridArea.appendChild(titleFemale);
+  
+  const descFemale = document.createElement('p');
+  descFemale.className = 'block-desc';
+  descFemale.textContent = 'Destinadas a meninas (Sementes 01 a 51)';
+  gridArea.appendChild(descFemale);
+
+  const gridFemale = document.createElement('div');
+  gridFemale.className = 'grid';
+  for(let i=1;i<=51;i++){
     const btn = document.createElement('button');
-    btn.className = 'seed' + (claimed[i] ? ' tomada' : '');
+    btn.className = 'seed female' + (claimed[i] ? ' tomada' : '');
     btn.textContent = String(i).padStart(3,'0');
     btn.setAttribute('data-n', i);
     if(claimed[i]){
       btn.title = 'Já apadrinhada';
     } else {
-      btn.addEventListener('click', () => openForm(i));
+      btn.addEventListener('click', () => openForm(i, 'Feminino'));
     }
-    grid.appendChild(btn);
+    gridFemale.appendChild(btn);
   }
-  gridArea.appendChild(grid);
+  gridArea.appendChild(gridFemale);
+
+  // Bloco Masculino
+  const titleMale = document.createElement('h2');
+  titleMale.className = 'block-title male';
+  titleMale.textContent = 'Sementes Masculinas';
+  gridArea.appendChild(titleMale);
+
+  const descMale = document.createElement('p');
+  descMale.className = 'block-desc';
+  descMale.textContent = 'Destinadas a meninos (Sementes 52 a 100)';
+  gridArea.appendChild(descMale);
+
+  const gridMale = document.createElement('div');
+  gridMale.className = 'grid';
+  for(let i=52;i<=100;i++){
+    const btn = document.createElement('button');
+    btn.className = 'seed male' + (claimed[i] ? ' tomada' : '');
+    btn.textContent = String(i).padStart(3,'0');
+    btn.setAttribute('data-n', i);
+    if(claimed[i]){
+      btn.title = 'Já apadrinhada';
+    } else {
+      btn.addEventListener('click', () => openForm(i, 'Masculino'));
+    }
+    gridMale.appendChild(btn);
+  }
+  gridArea.appendChild(gridMale);
+
   updatePlacar();
 }
 
@@ -322,17 +418,24 @@ function updatePlacar(){
   document.getElementById('placarDisponiveis').textContent = TOTAL - n;
 }
 
-function openForm(n){
+function openForm(n, gender){
   pendingSeed = n;
   const overlay = document.getElementById('overlay');
   const modal = document.getElementById('modalContent');
+  
+  const genderClass = gender === 'Feminino' ? 'female' : 'male';
+  const genderText = gender === 'Feminino' 
+    ? 'Atenção: Ao confirmar, você se compromete a doar 1 brinquedo para uma MENINA.' 
+    : 'Atenção: Ao confirmar, você se compromete a doar 1 brinquedo para um MENINO.';
+
   modal.innerHTML = `
     <h2>Semente <span class="seed-num">${String(n).padStart(3,'0')}</span></h2>
+    <p class="gender-notice ${genderClass}">${genderText}</p>
     <p class="desc">Preencha seus dados para confirmar o apadrinhamento. Essas informações servem apenas para controle interno da organização.</p>
     <label for="fNome">Nome completo</label>
     <input type="text" id="fNome" placeholder="Seu nome" autocomplete="name">
-    <label for="fMatricula">Matrícula</label>
-    <input type="text" id="fMatricula" placeholder="Sua matrícula" inputmode="numeric">
+    <label for="fCargo">Cargo</label>
+    <input type="text" id="fCargo" placeholder="Seu cargo">
     <label for="fTelefone">Telefone</label>
     <input type="tel" id="fTelefone" placeholder="(65) 90000-0000">
     <div class="error-msg" id="formError"></div>
@@ -358,26 +461,26 @@ function showError(msg){
 }
 
 async function submitClaim(){
-  const nome = document.getElementById('fNome').value.trim();[cite: 1]
-  const matricula = document.getElementById('fMatricula').value.trim();[cite: 1]
-  const telefone = document.getElementById('fTelefone').value.trim();[cite: 1]
-  const errEl = document.getElementById('formError');[cite: 1]
-  errEl.classList.remove('show');[cite: 1]
+  const nome = document.getElementById('fNome').value.trim();
+  const cargo = document.getElementById('fCargo').value.trim();
+  const telefone = document.getElementById('fTelefone').value.trim();
+  const errEl = document.getElementById('formError');
+  errEl.classList.remove('show');
 
-  if(!nome || !matricula || !telefone){[cite: 1]
-    showError('Preencha nome, matrícula e telefone para confirmar.');[cite: 1]
+  if(!nome || !cargo || !telefone){
+    showError('Preencha nome, cargo e telefone para confirmar.');
     return;
   }
 
-  const btnConfirm = document.getElementById('btnConfirm');[cite: 1]
-  btnConfirm.disabled = true;[cite: 1]
-  btnConfirm.textContent = 'Confirmando...';[cite: 1]
+  const btnConfirm = document.getElementById('btnConfirm');
+  btnConfirm.disabled = true;
+  btnConfirm.textContent = 'Confirmando...';
 
   try {
     const response = await fetch('/api/sementes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ semente_id: pendingSeed, nome, matricula, telefone })
+      body: JSON.stringify({ semente_id: pendingSeed, nome, cargo, telefone })
     });
 
     if (!response.ok) {
@@ -389,47 +492,10 @@ async function submitClaim(){
       return;
     }
 
-    claimed[pendingSeed] = { nome, matricula, telefone };
+    claimed[pendingSeed] = { nome, cargo, telefone };
     showSuccess(pendingSeed);
     renderGrid();
   } catch(e) {
-    console.error(e);
-    showError('Erro ao confirmar. Verifique sua conexão e tente novamente.');[cite: 1]
-    btnConfirm.disabled = false;[cite: 1]
-    btnConfirm.textContent = 'Confirmar';[cite: 1]
-  }
-
-  const btnConfirm = document.getElementById('btnConfirm');
-  btnConfirm.disabled = true;
-  btnConfirm.textContent = 'Confirmando...';
-
-  const key = 'seed:' + pendingSeed;
-
-  try{
-    // re-check availability right before writing (best-effort against race conditions)
-    let already = null;
-    try{ already = await window.storage.get(key, true); }catch(e){ already = null; }
-    if(already){
-      showError('Essa Semente acabou de ser apadrinhada por outra pessoa. Escolha outra.');
-      btnConfirm.disabled = false;
-      btnConfirm.textContent = 'Confirmar';
-      claimed[pendingSeed] = JSON.parse(already.value);
-      renderGrid();
-      return;
-    }
-
-    const payload = { nome, matricula, telefone, ts: new Date().toISOString() };
-    const result = await window.storage.set(key, JSON.stringify(payload), true);
-    if(!result){
-      showError('Não foi possível salvar. Tente novamente.');
-      btnConfirm.disabled = false;
-      btnConfirm.textContent = 'Confirmar';
-      return;
-    }
-    claimed[pendingSeed] = payload;
-    showSuccess(pendingSeed);
-    renderGrid();
-  }catch(e){
     console.error(e);
     showError('Erro ao confirmar. Verifique sua conexão e tente novamente.');
     btnConfirm.disabled = false;
