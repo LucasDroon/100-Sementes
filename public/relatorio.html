@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório - 100 Sementes</title>
+<!-- Bibliotecas para exportação -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root{
+    --navy: #1F3864;
+    --gold: #B8962E;
+    --cream: #F7F4EC;
+    --ink: #2A2A2A;
+  }
+  body{
+    margin:0; background:var(--cream); color:var(--ink);
+    font-family: Calibri, 'Trebuchet MS', Arial, sans-serif;
+  }
+  header{
+    background: var(--navy); color:#fff; padding:20px;
+    text-align:center; border-bottom:4px solid var(--gold);
+  }
+  main{ max-width:900px; margin:30px auto; padding:0 20px; }
+  
+  .actions {
+    display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 20px;
+  }
+  button {
+    padding: 10px 16px; border: none; border-radius: 6px;
+    font-weight: bold; cursor: pointer; color: #fff; font-family: inherit;
+  }
+  .btn-excel { background: #217346; }
+  .btn-pdf { background: #D32F2F; }
+  
+  table {
+    width: 100%; border-collapse: collapse; background: #fff;
+    border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
+  th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #E4E0D6; }
+  th { background: #E4E0D6; color: var(--navy); font-weight: bold; }
+  
+  .female { color: #A040A0; font-weight: bold; }
+  .male { color: #4070A0; font-weight: bold; }
+  
+  .resumo {
+    display: flex; gap: 20px; margin-bottom: 20px;
+  }
+  .card {
+    background: #fff; padding: 15px 20px; border-radius: 8px;
+    border-left: 4px solid var(--navy); box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h2>Relatório de Apadrinhamento - 100 Sementes</h2>
+</header>
+
+<main>
+  <div class="resumo">
+    <div class="card">
+      <div style="font-size:12px; color:#6B6B6B;">Total Apadrinhadas</div>
+      <div style="font-size:24px; font-weight:bold; color:var(--navy);" id="totalCount">0/100</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-excel" onclick="exportarExcel()">⬇ Exportar Excel</button>
+    <button class="btn-pdf" onclick="exportarPDF()">⬇ Exportar PDF</button>
+  </div>
+
+  <div id="areaRelatorio">
+    <table id="tabelaDados">
+      <thead>
+        <tr>
+          <th>Semente</th>
+          <th>Gênero</th>
+          <th>Padrinho / Madrinha</th>
+          <th>Cargo</th>
+          <th>Telefone</th>
+          <th>Data/Hora</th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela">
+        <tr><td colspan="6" style="text-align:center;">Carregando dados...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  async function carregarDados() {
+    try {
+      const response = await fetch('/api/sementes');
+      const data = await response.json();
+      
+      // Ordenar pelo número da semente
+      data.sort((a, b) => a.semente_id - b.semente_id);
+      
+      document.getElementById('totalCount').textContent = `${data.length}/100`;
+      
+      const tbody = document.getElementById('corpoTabela');
+      tbody.innerHTML = '';
+      
+      if(data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma semente apadrinhada ainda.</td></tr>';
+        return;
+      }
+
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        
+        // Define o gênero visualmente baseado no ID
+        const isFemale = row.semente_id <= 51;
+        const genero = isFemale ? '<span class="female">Feminino</span>' : '<span class="male">Masculino</span>';
+        const sementeFormatada = String(row.semente_id).padStart(3, '0');
+        
+        // Formata a data (assumindo que o banco retorna um formato ISO)
+        const dataObj = new Date(row.criado_em);
+        const dataFormatada = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+
+        tr.innerHTML = `
+          <td><b>${sementeFormatada}</b></td>
+          <td>${genero}</td>
+          <td>${row.nome}</td>
+          <td>${row.cargo}</td>
+          <td>${row.telefone}</td>
+          <td>${dataFormatada}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (e) {
+      document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao buscar dados.</td></tr>';
+    }
+  }
+
+  function exportarExcel() {
+    const tabela = document.getElementById('tabelaDados');
+    const workbook = XLSX.utils.table_to_book(tabela, {sheet: "Relatório"});
+    XLSX.writeFile(workbook, 'Relatorio_100Sementes.xlsx');
+  }
+
+  function exportarPDF() {
+    const elemento = document.getElementById('areaRelatorio');
+    const opt = {
+      margin:       0.5,
+      filename:     'Relatorio_100Sementes.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+    };
+    html2pdf().set(opt).from(elemento).save();
+  }
+
+  carregarDados();
+</script>
+</body>
+</html>
