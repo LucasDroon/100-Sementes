@@ -200,17 +200,27 @@
     wrapper.appendChild(miolo);
     wrapper.appendChild(footerClone);
 
-    // Fica fora da tela, mas renderizado, para o html2canvas conseguir capturar
-    wrapper.style.position = 'fixed';
-    wrapper.style.top = '0';
-    wrapper.style.left = '-10000px';
+    // Importante: html2canvas só captura corretamente elementos com
+    // coordenadas positivas (ele enquadra a área de 0,0 até o tamanho do
+    // documento). Por isso o container fica logo ABAIXO do conteúdo visível,
+    // em vez de "fora da tela" com left negativo (o que gerava PDF em branco).
+    wrapper.style.position = 'absolute';
+    wrapper.style.left = '0';
+    wrapper.style.top = (document.documentElement.scrollHeight + 20) + 'px';
+    wrapper.style.zIndex = '-1';
     document.body.appendChild(wrapper);
 
     const opt = {
       margin:       0.4,
       filename:     'Relatorio_100Sementes.pdf',
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
+      html2canvas:  {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F7F4EC',
+        windowWidth: wrapper.scrollWidth,
+        windowHeight: wrapper.scrollHeight
+      },
       jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
       pagebreak:    { mode: ['css', 'legacy'] }
     };
