@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório - 100 Sementes</title>
-<!-- Bibliotecas para exportação -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Biblioteca para exportação de PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root{
@@ -31,7 +30,6 @@
     padding: 10px 16px; border: none; border-radius: 6px;
     font-weight: bold; cursor: pointer; color: #fff; font-family: inherit;
   }
-  .btn-excel { background: #217346; }
   .btn-pdf { background: #D32F2F; }
   
   table {
@@ -68,7 +66,6 @@
   </div>
 
   <div class="actions">
-    <button class="btn-excel" onclick="exportarExcel()">⬇ Exportar Excel</button>
     <button class="btn-pdf" onclick="exportarPDF()">⬇ Exportar PDF</button>
   </div>
 
@@ -118,7 +115,7 @@
         const genero = isFemale ? '<span class="female">Feminino</span>' : '<span class="male">Masculino</span>';
         const sementeFormatada = String(row.semente_id).padStart(3, '0');
         
-        // Formata a data (assumindo que o banco retorna um formato ISO)
+        // Formata a data
         const dataObj = new Date(row.criado_em);
         const dataFormatada = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
 
@@ -135,12 +132,6 @@
     } catch (e) {
       document.getElementById('corpoTabela').innerHTML = '<tr><td colspan="6" style="text-align:center;color:red;">Erro ao buscar dados.</td></tr>';
     }
-  }
-
-  function exportarExcel() {
-    const tabela = document.getElementById('tabelaDados');
-    const workbook = XLSX.utils.table_to_book(tabela, {sheet: "Relatório"});
-    XLSX.writeFile(workbook, 'Relatorio_100Sementes.xlsx');
   }
 
   function exportarPDF() {
