@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relatório - 100 Sementes</title>
+<!-- Biblioteca para exportação de PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root{
@@ -50,6 +51,7 @@
     border-left: 4px solid var(--navy); box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   }
 
+  /* ==== Topo institucional (logo Judiciário) ==== */
   .topbar{
     background: var(--cream);
     padding: 12px 20px;
@@ -66,6 +68,7 @@
   .topbar .topbar-title strong{ display:block; font-size:16px; }
   .topbar .topbar-title span{ font-size:10px; letter-spacing:.09em; color:var(--gold); text-transform:uppercase; font-family: Calibri, Arial, sans-serif; }
 
+  /* ==== Rodapé institucional ==== */
   .site-footer{ margin-top:40px; }
   .footer-wave{ width:100%; display:block; height:auto; }
   .footer-credit{
@@ -144,10 +147,12 @@
       data.forEach(row => {
         const tr = document.createElement('tr');
         
+        // Define o gênero visualmente baseado no ID
         const isFemale = row.semente_id <= 51;
         const genero = isFemale ? '<span class="female">Feminino</span>' : '<span class="male">Masculino</span>';
         const sementeFormatada = String(row.semente_id).padStart(3, '0');
         
+        // Formata a data
         const dataObj = new Date(row.criado_em);
         const dataFormatada = dataObj.toLocaleDateString('pt-BR') + ' ' + dataObj.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
 
@@ -167,15 +172,53 @@
   }
 
   function exportarPDF() {
-    const elemento = document.getElementById('areaRelatorio');
+    const btnPdf = document.querySelector('.btn-pdf');
+    const textoOriginal = btnPdf ? btnPdf.textContent : null;
+    if (btnPdf) { btnPdf.disabled = true; btnPdf.textContent = 'Gerando PDF...'; }
+
+    // Monta um container temporário só para a exportação, incluindo
+    // o cabeçalho institucional (topo) e o rodapé, além do resumo e da tabela.
+    const wrapper = document.createElement('div');
+    wrapper.style.background = '#F7F4EC';
+    wrapper.style.width = '1200px';
+
+    const topbarClone = document.querySelector('.topbar').cloneNode(true);
+    const headerClone = document.querySelector('header').cloneNode(true);
+
+    const miolo = document.createElement('div');
+    miolo.style.padding = '24px 30px';
+    const resumoClone = document.querySelector('.resumo').cloneNode(true);
+    resumoClone.style.marginBottom = '18px';
+    const tabelaClone = document.getElementById('tabelaDados').cloneNode(true);
+    miolo.appendChild(resumoClone);
+    miolo.appendChild(tabelaClone);
+
+    const footerClone = document.querySelector('.site-footer').cloneNode(true);
+
+    wrapper.appendChild(topbarClone);
+    wrapper.appendChild(headerClone);
+    wrapper.appendChild(miolo);
+    wrapper.appendChild(footerClone);
+
+    // Fica fora da tela, mas renderizado, para o html2canvas conseguir capturar
+    wrapper.style.position = 'fixed';
+    wrapper.style.top = '0';
+    wrapper.style.left = '-10000px';
+    document.body.appendChild(wrapper);
+
     const opt = {
-      margin:       0.5,
+      margin:       0.4,
       filename:     'Relatorio_100Sementes.pdf',
       image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' },
+      pagebreak:    { mode: ['css', 'legacy'] }
     };
-    html2pdf().set(opt).from(elemento).save();
+
+    html2pdf().set(opt).from(wrapper).save().finally(() => {
+      document.body.removeChild(wrapper);
+      if (btnPdf) { btnPdf.disabled = false; btnPdf.textContent = textoOriginal; }
+    });
   }
 
   carregarDados();
