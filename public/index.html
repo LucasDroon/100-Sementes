@@ -17,7 +17,7 @@
     --muted: #6B6B6B;
     --taken: #E4E0D6;
     
-    /* Novas cores para os gêneros */
+    /* Cores para os gêneros */
     --pink-border: #D86ED8;
     --pink-bg: #FFF0FF;
     --pink-taken: #EACEEA;
@@ -102,7 +102,6 @@
   .dot.disp{ background:var(--paper); border:1.5px solid var(--navy); }
   .dot.tomada{ background:var(--taken); border:1.5px solid #B9B3A2; }
 
-  /* Estilos para os blocos de gênero */
   .block-title {
     font-family: Georgia, serif;
     font-size: 22px;
@@ -121,7 +120,7 @@
 
   .grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(58px,1fr));
+    grid-template-columns:repeat(auto-fill, minmax(68px,1fr));
     gap:10px;
     margin-bottom: 30px;
   }
@@ -132,19 +131,31 @@
     border:1.5px solid var(--navy);
     background:var(--paper);
     color:var(--navy);
-    font-family: Georgia, serif;
-    font-weight:700;
-    font-size:15px;
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
     cursor:pointer;
     transition: transform .12s ease, box-shadow .12s ease;
+    padding: 4px;
   }
   .seed:hover{ transform:translateY(-2px); box-shadow:0 4px 10px rgba(31,56,100,0.18); }
   .seed:active{ transform:translateY(0); }
+  
+  .seed-num-text {
+    font-family: Georgia, serif;
+    font-weight:700;
+    font-size:16px;
+  }
+  .seed-age-text {
+    font-family: Calibri, 'Trebuchet MS', Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 2px;
+    opacity: 0.85;
+  }
 
-  /* Estilos Específicos Feminino (1 a 51) */
+  /* Feminino (1 a 51) */
   .seed.female {
     border-color: var(--pink-border);
     color: #A040A0;
@@ -155,10 +166,9 @@
     border-color: #C0A0C0;
     color: #907090;
     cursor: default;
-    font-weight: 600;
   }
   
-  /* Estilos Específicos Masculino (52 a 100) */
+  /* Masculino (52 a 100) */
   .seed.male {
     border-color: var(--blue-border);
     color: #4070A0;
@@ -169,7 +179,6 @@
     border-color: #A0B0C0;
     color: #708090;
     cursor: default;
-    font-weight: 600;
   }
 
   .seed.tomada:hover{ transform:none; box-shadow:none; }
@@ -337,6 +346,20 @@ const TOTAL = 100;
 let claimed = {}; 
 let pendingSeed = null;
 
+// Objeto contendo as idades extraídas das planilhas
+const idades = {
+  1: "02", 2: "04", 3: "04", 4: "04", 5: "05", 6: "05", 7: "05", 8: "05", 9: "05", 10: "06", 
+  11: "06", 12: "06", 13: "06", 14: "07", 15: "07", 16: "07", 17: "08", 18: "08", 19: "08", 20: "08", 
+  21: "08", 22: "09", 23: "09", 24: "09", 25: "09", 26: "09", 27: "09", 28: "09", 29: "10", 30: "10", 
+  31: "10", 32: "10", 33: "10", 34: "10", 35: "10", 36: "10", 37: "10", 38: "11", 39: "11", 40: "11", 
+  41: "11", 42: "11", 43: "12", 44: "13", 45: "13", 46: "13", 47: "13", 48: "14", 49: "15", 50: "15", 51: "23",
+  52: "04", 53: "04", 54: "05", 55: "05", 56: "05", 57: "06", 58: "06", 59: "06", 60: "06", 61: "06", 
+  62: "07", 63: "07", 64: "07", 65: "07", 66: "08", 67: "08", 68: "08", 69: "08", 70: "09", 71: "09", 
+  72: "09", 73: "09", 74: "09", 75: "09", 76: "09", 77: "10", 78: "10", 79: "10", 80: "10", 81: "10", 
+  82: "10", 83: "11", 84: "11", 85: "11", 86: "11", 87: "12", 88: "12", 89: "12", 90: "12", 91: "12", 
+  92: "12", 93: "12", 94: "12", 95: "13", 96: "13", 97: "13", 98: "13", 99: "14", 100: "15"
+};
+
 async function loadClaimed(){
   try {
     const response = await fetch('/api/sementes');
@@ -371,7 +394,11 @@ function renderGrid(){
   for(let i=1;i<=51;i++){
     const btn = document.createElement('button');
     btn.className = 'seed female' + (claimed[i] ? ' tomada' : '');
-    btn.textContent = String(i).padStart(3,'0');
+    
+    // Inserindo o HTML interno com o número e a idade correspondente
+    btn.innerHTML = `<span class="seed-num-text">${String(i).padStart(3,'0')}</span>
+                     <span class="seed-age-text">${idades[i]} anos</span>`;
+    
     btn.setAttribute('data-n', i);
     if(claimed[i]){
       btn.title = 'Já apadrinhada';
@@ -398,7 +425,11 @@ function renderGrid(){
   for(let i=52;i<=100;i++){
     const btn = document.createElement('button');
     btn.className = 'seed male' + (claimed[i] ? ' tomada' : '');
-    btn.textContent = String(i).padStart(3,'0');
+    
+    // Inserindo o HTML interno com o número e a idade correspondente
+    btn.innerHTML = `<span class="seed-num-text">${String(i).padStart(3,'0')}</span>
+                     <span class="seed-age-text">${idades[i]} anos</span>`;
+    
     btn.setAttribute('data-n', i);
     if(claimed[i]){
       btn.title = 'Já apadrinhada';
@@ -424,9 +455,11 @@ function openForm(n, gender){
   const modal = document.getElementById('modalContent');
   
   const genderClass = gender === 'Feminino' ? 'female' : 'male';
+  
+  // Atualiza o aviso de gênero com a idade da criança respectiva
   const genderText = gender === 'Feminino' 
-    ? 'Atenção: Ao confirmar, você se compromete a doar 1 brinquedo para uma MENINA.' 
-    : 'Atenção: Ao confirmar, você se compromete a doar 1 brinquedo para um MENINO.';
+    ? `Atenção: Ao confirmar, você se compromete a doar 1 brinquedo para uma MENINA de ${idades[n]} anos.` 
+    : `Atenção: Ao confirmar, você se compromete a doar 1 brinquedo para um MENINO de ${idades[n]} anos.`;
 
   modal.innerHTML = `
     <h2>Semente <span class="seed-num">${String(n).padStart(3,'0')}</span></h2>
