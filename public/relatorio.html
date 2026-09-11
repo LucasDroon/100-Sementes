@@ -172,6 +172,7 @@
   }
 
   function exportarPDF() {
+    document.querySelector('.actions').style.display = 'none';
     const btnPdf = document.querySelector('.btn-pdf');
     const textoOriginal = btnPdf ? btnPdf.textContent : null;
     if (btnPdf) { btnPdf.disabled = true; btnPdf.textContent = 'Gerando PDF...'; }
@@ -179,7 +180,7 @@
     // Monta o conteúdo do PDF: topo institucional, cabeçalho, resumo,
     // tabela e rodapé.
     const conteudo = document.createElement('div');
-    conteudo.style.width = '1200px';
+    conteudo.style.width = '100%';
     conteudo.style.margin = '0 auto';
     conteudo.style.background = '#F7F4EC';
 
@@ -233,6 +234,7 @@
     setTimeout(() => {
       html2pdf().set(opt).from(conteudo).save().finally(() => {
         document.body.removeChild(overlay);
+        document.querySelector('.actions').style.display = 'flex';
         if (btnPdf) { btnPdf.disabled = false; btnPdf.textContent = textoOriginal; }
       });
     }, 150);
