@@ -284,6 +284,19 @@
   }
   .error-msg.show{ display:block; }
 
+  .field-hint{
+    font-size:11.5px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+  input.invalid{
+    border-color:#C0392B;
+    background:#FFFBFA;
+  }
+  input.valid{
+    border-color:#4A7856;
+  }
+
   .success{
     text-align:center;
     padding:6px 0 4px;
@@ -381,6 +394,36 @@
 const TOTAL = 100;
 let claimed = {}; 
 let pendingSeed = null;
+
+// ==== Máscara e validação de telefone ====
+// Formata progressivamente para (DD) DDDD-DDDD (fixo, 10 dígitos)
+// ou (DD) DDDDD-DDDD (celular, 11 dígitos) conforme o usuário digita.
+function maskTelefone(valor){
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  if(digitos.length === 0) return '';
+  if(digitos.length <= 2) return `(${digitos}`;
+  if(digitos.length <= 6) return `(${digitos.slice(0,2)}) ${digitos.slice(2)}`;
+  if(digitos.length <= 10) return `(${digitos.slice(0,2)}) ${digitos.slice(2,6)}-${digitos.slice(6)}`;
+  return `(${digitos.slice(0,2)}) ${digitos.slice(2,7)}-${digitos.slice(7)}`;
+}
+
+function apenasDigitos(valor){
+  return valor.replace(/\D/g, '');
+}
+
+// Retorna a mensagem de erro, ou null se o telefone for válido.
+// Regra: 10 dígitos (fixo) ou 11 dígitos (celular), com DDD válido (11–99)
+// e, no caso de celular, o terceiro dígito precisa ser 9.
+function validarTelefone(valor){
+  const d = apenasDigitos(valor);
+  if(d.length === 0) return 'Informe um telefone para contato.';
+  if(d.length < 10) return `Telefone incompleto: faltam ${10 - d.length} dígito(s). Informe o DDD + número.`;
+  if(d.length > 11) return 'Telefone inválido: excede 11 dígitos.';
+  const ddd = parseInt(d.slice(0, 2), 10);
+  if(ddd < 11 || ddd > 99) return 'DDD inválido.';
+  if(d.length === 11 && d[2] !== '9') return 'Celular com 11 dígitos deve começar com 9 após o DDD.';
+  return null;
+}
 
 // Objeto contendo as idades extraídas das planilhas
 const idades = {
@@ -502,11 +545,12 @@ function openForm(n, gender){
     <p class="gender-notice ${genderClass}">${genderText}</p>
     <p class="desc">Preencha seus dados para confirmar o apadrinhamento. Essas informações servem apenas para controle interno da organização.</p>
     <label for="fNome">Nome completo</label>
-    <input type="text" id="fNome" placeholder="Seu nome" autocomplete="name">
+    <input type="text" id="fNome" placeholder="Seu nome" autocomplete="name" minlength="3" maxlength="80">
     <label for="fCargo">Cargo</label>
-    <input type="text" id="fCargo" placeholder="Seu cargo">
+    <input type="text" id="fCargo" placeholder="Seu cargo" minlength="2" maxlength="60">
     <label for="fTelefone">Telefone</label>
-    <input type="tel" id="fTelefone" placeholder="(65) 90000-0000">
+    <input type="tel" id="fTelefone" placeholder="(65) 90000-0000" inputmode="numeric" autocomplete="tel" minlength="14" maxlength="16">
+    <div class="field-hint">DDD + número, com 10 ou 11 dígitos. Ex: (65) 99999-8888</div>
     <div class="error-msg" id="formError"></div>
     <div class="modal-actions">
       <button class="secondary" id="btnCancel">Cancelar</button>
@@ -514,6 +558,24 @@ function openForm(n, gender){
     </div>
   `;
   overlay.classList.add('show');
+
+  const fNome = document.getElementById('fNome');
+  const fCargo = document.getElementById('fCargo');
+  const fTelefone = document.getElementById('fTelefone');
+
+  // Aplica a máscara em tempo real e limpa o estado de erro ao digitar.
+  fTelefone.addEventListener('input', () => {
+    const posicaoAntes = fTelefone.selectionStart;
+    const tamanhoAntes = fTelefone.value.length;
+    fTelefone.value = maskTelefone(fTelefone.value);
+    const diff = fTelefone.value.length - tamanhoAntes;
+    const novaPosicao = Math.max(0, (posicaoAntes || 0) + diff);
+    fTelefone.setSelectionRange(novaPosicao, novaPosicao);
+    fTelefone.classList.remove('invalid');
+  });
+  fNome.addEventListener('input', () => fNome.classList.remove('invalid'));
+  fCargo.addEventListener('input', () => fCargo.classList.remove('invalid'));
+
   document.getElementById('btnCancel').addEventListener('click', closeModal);
   document.getElementById('btnConfirm').addEventListener('click', submitClaim);
 }
@@ -530,14 +592,35 @@ function showError(msg){
 }
 
 async function submitClaim(){
-  const nome = document.getElementById('fNome').value.trim();
-  const cargo = document.getElementById('fCargo').value.trim();
-  const telefone = document.getElementById('fTelefone').value.trim();
+  const fNome = document.getElementById('fNome');
+  const fCargo = document.getElementById('fCargo');
+  const fTelefone = document.getElementById('fTelefone');
+
+  const nome = fNome.value.trim().replace(/\s+/g, ' ');
+  const cargo = fCargo.value.trim().replace(/\s+/g, ' ');
+  const telefone = fTelefone.value.trim();
+
   const errEl = document.getElementById('formError');
   errEl.classList.remove('show');
+  [fNome, fCargo, fTelefone].forEach(el => el.classList.remove('invalid'));
 
-  if(!nome || !cargo || !telefone){
-    showError('Preencha nome, cargo e telefone para confirmar.');
+  if(!nome || nome.length < 3){
+    fNome.classList.add('invalid');
+    showError('Informe seu nome completo (mínimo 3 caracteres).');
+    fNome.focus();
+    return;
+  }
+  if(!cargo || cargo.length < 2){
+    fCargo.classList.add('invalid');
+    showError('Informe seu cargo (mínimo 2 caracteres).');
+    fCargo.focus();
+    return;
+  }
+  const erroTelefone = validarTelefone(telefone);
+  if(erroTelefone){
+    fTelefone.classList.add('invalid');
+    showError(erroTelefone);
+    fTelefone.focus();
     return;
   }
 
