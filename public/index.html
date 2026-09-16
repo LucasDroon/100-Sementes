@@ -324,6 +324,33 @@
 
   .load-state{ text-align:center; color:var(--muted); padding:30px 0; font-size:14px; }
 
+  /* ==== Banner de prazo limite ==== */
+  .deadline-banner{
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+    color: var(--navy-dark);
+    text-align:center;
+    font-size:14px;
+    font-weight:700;
+    padding:13px 16px;
+    letter-spacing:.01em;
+    border-bottom:1px solid rgba(0,0,0,0.08);
+  }
+  .deadline-banner .deadline-icon{ margin-right:6px; }
+  .deadline-banner strong{ text-decoration:underline; text-underline-offset:2px; }
+  .deadline-banner.encerrado{
+    background:#A33A34;
+    color:#fff;
+  }
+  .deadline-banner.encerrado strong{ text-decoration:none; }
+
+  /* Sementes indisponíveis por prazo encerrado */
+  .seed.encerrado{
+    cursor:default;
+    opacity:.55;
+    filter:grayscale(.4);
+  }
+  .seed.encerrado:hover{ transform:none; box-shadow:none; }
+
   /* ==== Topo institucional (logo Judiciário) ==== */
   .topbar{
     background: var(--cream);
@@ -374,6 +401,10 @@
     <div><div class="num">100</div><div class="lbl">meta</div></div>
   </div>
 </header>
+
+<div class="deadline-banner" id="deadlineBanner">
+  <span class="deadline-icon"></span>Prazo final para apadrinhamento e entrega do presente: <strong>02/10/2026</strong>
+</div>
 
 <main>
   <div class="legenda">
@@ -426,6 +457,33 @@ function validarTelefone(valor){
 }
 
 // Objeto contendo as idades extraídas das planilhas
+// ==== Prazo limite de apadrinhamento ====
+// Após essa data/hora (inclusive o próprio dia 02/10/2026), o sistema
+// não permite mais apadrinhar nenhuma Semente.
+const PRAZO_LIMITE = new Date(2026, 9, 2, 0, 0, 0); // mês 9 = outubro (0-indexado)
+
+function prazoEncerrado(){
+  return new Date() >= PRAZO_LIMITE;
+}
+
+function formatarDataLimite(){
+  const d = PRAZO_LIMITE;
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+
+function atualizarBannerPrazo(){
+  const banner = document.getElementById('deadlineBanner');
+  if(!banner) return;
+  if(prazoEncerrado()){
+    banner.classList.add('encerrado');
+    banner.innerHTML = `<span class="deadline-icon">🔒</span>Prazo encerrado em <strong>${formatarDataLimite()}</strong> — não é mais possível apadrinhar novas Sementes.`;
+  } else {
+    banner.classList.remove('encerrado');
+    banner.innerHTML = `<span class="deadline-icon"></span>Prazo final para apadrinhamento e entrega do presente: <strong>${formatarDataLimite()}</strong>`;
+  }
+}
+atualizarBannerPrazo();
+
 const idades = {
   1: "02", 2: "04", 3: "04", 4: "04", 5: "05", 6: "05", 7: "05", 8: "05", 9: "05", 10: "06", 
   11: "06", 12: "06", 13: "06", 14: "07", 15: "07", 16: "07", 17: "08", 18: "08", 19: "08", 20: "08", 
@@ -456,6 +514,8 @@ function renderGrid(){
   const gridArea = document.getElementById('gridArea');
   gridArea.className = '';
   gridArea.innerHTML = '';
+
+  const encerrado = prazoEncerrado();
   
   // Bloco Feminino
   const titleFemale = document.createElement('h2');
@@ -472,7 +532,7 @@ function renderGrid(){
   gridFemale.className = 'grid';
   for(let i=1;i<=51;i++){
     const btn = document.createElement('button');
-    btn.className = 'seed female' + (claimed[i] ? ' tomada' : '');
+    btn.className = 'seed female' + (claimed[i] ? ' tomada' : (encerrado ? ' encerrado' : ''));
     
     // Inserindo o HTML interno com o número e a idade correspondente
     btn.innerHTML = `<span class="seed-num-text">${String(i).padStart(3,'0')}</span>
@@ -481,6 +541,8 @@ function renderGrid(){
     btn.setAttribute('data-n', i);
     if(claimed[i]){
       btn.title = 'Já apadrinhada';
+    } else if(encerrado){
+      btn.title = `Prazo de apadrinhamento encerrado em ${formatarDataLimite()}`;
     } else {
       btn.addEventListener('click', () => openForm(i, 'Feminino'));
     }
@@ -503,7 +565,7 @@ function renderGrid(){
   gridMale.className = 'grid';
   for(let i=52;i<=100;i++){
     const btn = document.createElement('button');
-    btn.className = 'seed male' + (claimed[i] ? ' tomada' : '');
+    btn.className = 'seed male' + (claimed[i] ? ' tomada' : (encerrado ? ' encerrado' : ''));
     
     // Inserindo o HTML interno com o número e a idade correspondente
     btn.innerHTML = `<span class="seed-num-text">${String(i).padStart(3,'0')}</span>
@@ -512,6 +574,8 @@ function renderGrid(){
     btn.setAttribute('data-n', i);
     if(claimed[i]){
       btn.title = 'Já apadrinhada';
+    } else if(encerrado){
+      btn.title = `Prazo de apadrinhamento encerrado em ${formatarDataLimite()}`;
     } else {
       btn.addEventListener('click', () => openForm(i, 'Masculino'));
     }
@@ -529,6 +593,12 @@ function updatePlacar(){
 }
 
 function openForm(n, gender){
+  if(prazoEncerrado()){
+    // Segurança extra: mesmo que o botão tenha sido acionado por algum
+    // outro caminho, o formulário não abre após o prazo limite.
+    atualizarBannerPrazo();
+    return;
+  }
   pendingSeed = n;
   const overlay = document.getElementById('overlay');
   const modal = document.getElementById('modalContent');
@@ -592,6 +662,15 @@ function showError(msg){
 }
 
 async function submitClaim(){
+  if(prazoEncerrado()){
+    // Segurança extra: se por algum motivo o modal já estava aberto
+    // quando o prazo virou, bloqueia o envio e avisa o usuário.
+    closeModal();
+    renderGrid();
+    atualizarBannerPrazo();
+    alert(`O prazo para apadrinhamento se encerrou em ${formatarDataLimite()}. Não é mais possível confirmar.`);
+    return;
+  }
   const fNome = document.getElementById('fNome');
   const fCargo = document.getElementById('fCargo');
   const fTelefone = document.getElementById('fTelefone');
