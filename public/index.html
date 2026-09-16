@@ -327,16 +327,21 @@
   /* ==== Banner de prazo limite ==== */
   .deadline-banner{
     background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
-    color: var(--navy-dark);
+    color: #ffffff;
     text-align:center;
-    font-size:14px;
-    font-weight:700;
-    padding:13px 16px;
-    letter-spacing:.01em;
+    font-size:16px;
+    font-weight:800;
+    padding:15px 16px;
+    letter-spacing:.02em;
     border-bottom:1px solid rgba(0,0,0,0.08);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.45);
   }
-  .deadline-banner .deadline-icon{ margin-right:6px; }
-  .deadline-banner strong{ text-decoration:underline; text-underline-offset:2px; }
+  .deadline-banner .deadline-icon{ margin-right:7px; font-size:1.1em; }
+  .deadline-banner strong{
+    font-size:1.2em;
+    text-decoration:underline;
+    text-underline-offset:3px;
+  }
   .deadline-banner.encerrado{
     background:#A33A34;
     color:#fff;
@@ -403,7 +408,7 @@
 </header>
 
 <div class="deadline-banner" id="deadlineBanner">
-  <span class="deadline-icon"></span>Prazo final para apadrinhamento e entrega do presente: <strong>02/10/2026</strong>
+  <span class="deadline-icon"></span>PRAZO FINAL PARA APADRINHAMENTO E ENTREGA DA DOAÇÃO: <strong>02/10/2026</strong>
 </div>
 
 <main>
@@ -479,7 +484,7 @@ function atualizarBannerPrazo(){
     banner.innerHTML = `<span class="deadline-icon">🔒</span>Prazo encerrado em <strong>${formatarDataLimite()}</strong> — não é mais possível apadrinhar novas Sementes.`;
   } else {
     banner.classList.remove('encerrado');
-    banner.innerHTML = `<span class="deadline-icon"></span>Prazo final para apadrinhamento e entrega do presente: <strong>${formatarDataLimite()}</strong>`;
+    banner.innerHTML = `<span class="deadline-icon"></span>PRAZO FINAL PARA APADRINHAMENTO E ENTREGA DA DOAÇÃO: <strong>${formatarDataLimite()}</strong>`;
   }
 }
 atualizarBannerPrazo();
