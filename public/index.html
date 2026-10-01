@@ -408,7 +408,7 @@
 </header>
 
 <div class="deadline-banner" id="deadlineBanner">
-  <span class="deadline-icon"></span>PRAZO FINAL PARA APADRINHAMENTO E ENTREGA DA DOAÇÃO: <strong>02/10/2026</strong>
+  <span class="deadline-icon"></span>PRAZO FINAL PARA APADRINHAMENTO E ENTREGA DA DOAÇÃO: <strong>09/10/2026</strong>
 </div>
 
 <main>
@@ -463,16 +463,17 @@ function validarTelefone(valor){
 
 // Objeto contendo as idades extraídas das planilhas
 // ==== Prazo limite de apadrinhamento ====
-// Após essa data/hora (inclusive o próprio dia 02/10/2026), o sistema
-// não permite mais apadrinhar nenhuma Semente.
-const PRAZO_LIMITE = new Date(2026, 9, 2, 0, 0, 0); // mês 9 = outubro (0-indexado)
+// Vale o dia 09/10/2026 inteiro (até 23:59:59). A partir de 00:00:00
+// do dia 10/10/2026 o sistema não permite mais apadrinhar nenhuma Semente.
+const PRAZO_LIMITE_EXIBIDO = new Date(2026, 9, 9); // data mostrada ao usuário: 09/10/2026
+const PRAZO_LIMITE = new Date(2026, 9, 10, 0, 0, 0); // mês 9 = outubro (0-indexado); momento exato do bloqueio
 
 function prazoEncerrado(){
   return new Date() >= PRAZO_LIMITE;
 }
 
 function formatarDataLimite(){
-  const d = PRAZO_LIMITE;
+  const d = PRAZO_LIMITE_EXIBIDO;
   return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
 }
 
